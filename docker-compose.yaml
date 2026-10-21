@@ -25,8 +25,6 @@ x-airflow-common: &airflow-common
   depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
-  networks:
-    - dag_sample
 
 
 services:
@@ -37,8 +35,6 @@ services:
       POSTGRES_DB: keycloak_db
       POSTGRES_USER: keycloak_user
       POSTGRES_PASSWORD: keycloak_password
-    networks:
-      - dag_sample
     volumes:
       - ./postgres-keycloak-data:/var/lib/postgresql/data
     ports:
@@ -53,8 +49,6 @@ services:
       KC_DB_URL: jdbc:postgresql://keycloak_db:5432/keycloak_db
       KC_DB_USERNAME: keycloak_user
       KC_DB_PASSWORD: keycloak_password
-    networks:
-      - dag_sample
     command: 
       - start-dev
       - --import-realm
@@ -69,8 +63,6 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    networks:
-      - dag_sample
     ports:
       - "3000:3000"
     environment:
@@ -83,8 +75,6 @@ services:
     build:
       context: ./backend/Reports
       dockerfile: Dockerfile
-    networks:
-      - dag_sample
     container_name: reports-api
     ports:
       - "8000:8000"
@@ -112,8 +102,6 @@ services:
       retries: 5
       start_period: 5s
     restart: always
-    networks:
-      - dag_sample
 
   airflow-webserver:
     <<: *airflow-common
@@ -126,8 +114,6 @@ services:
       airflow-init:
         condition: service_completed_successfully
     command: webserver
-    networks:
-      - dag_sample
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8081/health || exit 1" ]
       interval: 30s
@@ -136,8 +122,6 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
-    networks:
-      - dag_sample
     command: scheduler
     depends_on:
       postgres:
@@ -157,8 +141,6 @@ services:
         condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
-    networks:
-      - dag_sample
     command: bash -c "airflow triggerer"
     healthcheck:
       test:
@@ -175,8 +157,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - dag_sample
     profiles:
       - debug
     command:
@@ -190,11 +170,6 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      bash -c " airflow db init && airflow users create \ --username admin \ --firstname admin \ --lastname admin \ --role Admin \ --email admin@sample.ru \ --password admin 
-      
+      bash -c " airflow db init && airflow users create \ --username admin \ --firstname admin \ --lastname admin \ --role Admin \ --email admin@sample.ru \ --password admin \
+      && airflow connections add 'write_to_postgres' \ --conn-type 'postgres' \ --conn-host 'postgres' \ --conn-login 'airflow' \ --conn-password 'airflow' \ --conn-port 5432 \ --conn-schema 'sample'
       "
-    networks:
-      - dag_sample
-
-networks:
-  dag_sample:

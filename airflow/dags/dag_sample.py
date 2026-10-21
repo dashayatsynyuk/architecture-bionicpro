@@ -61,9 +61,6 @@ with DAG('csv_to_postgres_dag',
             event_type  INT NOT NULL DEFAULT 0
         );
 
-        CREATE INDEX IF NOT EXISTS idx_telemetry_user_time
-            ON telemetryEvents (user_id, event_time);
-
         INSERT INTO telemetryEvents (user_id, event_time, event_type)
         SELECT
             u.user_id,
